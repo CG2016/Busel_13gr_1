@@ -1,5 +1,7 @@
 import javax.swing.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 /**
@@ -53,12 +55,6 @@ public class LuvPanel extends AbstractColorChooserPanel {
         lfield.setModel(lmodel);
         ufield.setModel(umodel);
         vfield.setModel(vmodel);
-        /*lfield.setText(Double.toString(L));
-        lfield.setEditable(false);
-        ufield.setText(Double.toString(U));
-        ufield.setEditable(false);
-        vfield.setText(Double.toString(V));
-        vfield.setEditable(false);*/
         Box container = Box.createVerticalBox();
         container.setSize(750,450);
         Box lbox = Box.createHorizontalBox();
@@ -77,10 +73,18 @@ public class LuvPanel extends AbstractColorChooserPanel {
         container.add(ubox);
         container.add(vbox);
         this.add(container);
-        //lslider.addChangeListener(lListener);
+        lfield.addChangeListener(lListener);
+        vfield.addChangeListener(vListener);
+        ufield.addChangeListener(uListener);
+        lslider.setEnabled(false);
+        uslider.setEnabled(false);
+        vslider.setEnabled(false);
+        //lslider.addChangeListener(lsListener);
+        //uslider.addChangeListener(usListener);
+        //vslider.addChangeListener(vsListener);
     }
 
-    /*private final ChangeListener lListener = new ChangeListener() {
+    private final ChangeListener lsListener = new ChangeListener() {
         @Override
         public void stateChanged(ChangeEvent event) {
             JSlider source = (JSlider) event.getSource();
@@ -89,7 +93,62 @@ public class LuvPanel extends AbstractColorChooserPanel {
             convertXYZtoRGB();
             getColorSelectionModel().setSelectedColor(new Color((int)R,(int)G,(int)B));
         }
-    };*/
+    };
+
+    private final ChangeListener vsListener = new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent event) {
+            JSlider source = (JSlider) event.getSource();
+            V = source.getValue();
+            convertLuvtoXYZ();
+            convertXYZtoRGB();
+            getColorSelectionModel().setSelectedColor(new Color((int)R,(int)G,(int)B));
+        }
+    };
+
+    private final ChangeListener usListener = new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent event) {
+            JSlider source = (JSlider) event.getSource();
+            U = source.getValue();
+            convertLuvtoXYZ();
+            convertXYZtoRGB();
+            getColorSelectionModel().setSelectedColor(new Color((int)R,(int)G,(int)B));
+        }
+    };
+
+    private final ChangeListener vListener = new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent event) {
+            JSpinner source = (JSpinner) event.getSource();
+            V = (Double)source.getValue();
+            convertLuvtoXYZ();
+            convertXYZtoRGB();
+            getColorSelectionModel().setSelectedColor(new Color((int)R,(int)G,(int)B));
+        }
+    };
+
+    private final ChangeListener uListener = new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent event) {
+            JSpinner source = (JSpinner) event.getSource();
+            U = (Double)source.getValue();
+            convertLuvtoXYZ();
+            convertXYZtoRGB();
+            getColorSelectionModel().setSelectedColor(new Color((int)R,(int)G,(int)B));
+        }
+    };
+
+    private final ChangeListener lListener = new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent event) {
+            JSpinner source = (JSpinner) event.getSource();
+            L = (Double)source.getValue();
+            convertLuvtoXYZ();
+            convertXYZtoRGB();
+            getColorSelectionModel().setSelectedColor(new Color((int)R,(int)G,(int)B));
+        }
+    };
 
     @Override
     public String getDisplayName() {
@@ -137,9 +196,9 @@ public class LuvPanel extends AbstractColorChooserPanel {
     }
 
     private void convertXYZtoRGB() {
-        double x = X / 100;        //X from 0 to  95.047
-        double y = Y / 100;        //Y from 0 to 100.000
-        double z = Z / 100;        //Z from 0 to 108.883
+        double x = X / 100.0;        //X from 0 to  95.047
+        double y = Y / 100.0;        //Y from 0 to 100.000
+        double z = Z / 100.0;        //Z from 0 to 108.883
 
         double r = x *  3.2406 + y * -1.5372 + z * -0.4986;
         double g = x * -0.9689 + y *  1.8758 + z *  0.0415;
@@ -161,9 +220,28 @@ public class LuvPanel extends AbstractColorChooserPanel {
             b = 12.92 * b;
         }
 
-        R = (int) (r * 255);
-        G = (int) (g * 255);
-        B = (int) (b * 255);
+        R = (int) (r * 255.0);
+        G = (int) (g * 255.0);
+        B = (int) (b * 255.0);
+
+        if(R>255){
+            R = 255.0;
+        }
+        if(R<0){
+            R=0.0;
+        }
+        if(G>255){
+            G = 255.0;
+        }
+        if(G<0){
+            G=0.0;
+        }
+        if(B>255){
+            B = 255.0;
+        }
+        if(B<0){
+            B=0.0;
+        }
     }
 
     private void convertXYZtoLuv(){
@@ -190,26 +268,26 @@ public class LuvPanel extends AbstractColorChooserPanel {
     }
 
     private void convertLuvtoXYZ(){
-        double y = ( L + 16 ) / 116;
-        if ( Math.pow(y,3) > 0.008856 ){
-            y = Math.pow(y,3);
+        double y = ( L + 16 ) / 116.0;
+        if ( Math.pow(y,3.0) > 0.008856 ){
+            y = Math.pow(y,3.0);
         } else {
-            y = ( y - 16 / 116 ) / 7.787;
+            y = ( y - 16 / 116.0 ) / 7.787;
         }
 
         double ref_X =  95.047;
         double ref_Y = 100.000;
         double ref_Z = 108.883;
 
-        double ref_U = ( 4 * ref_X ) / ( ref_X + ( 15 * ref_Y ) + ( 3 * ref_Z ) );
-        double ref_V = ( 9 * ref_Y ) / ( ref_X + ( 15 * ref_Y ) + ( 3 * ref_Z ) );
+        double ref_U = ( 4.0 * ref_X ) / ( ref_X + ( 15.0 * ref_Y ) + ( 3.0 * ref_Z ) );
+        double ref_V = ( 9.0 * ref_Y ) / ( ref_X + ( 15.0 * ref_Y ) + ( 3.0 * ref_Z ) );
 
-        double var_U = U / ( 13 * L ) + ref_U;
-        double var_V = V / ( 13 * L ) + ref_V;
+        double var_U = U / ( 13.0 * L ) + ref_U;
+        double var_V = V / ( 13.0 * L ) + ref_V;
 
-        Y = y * 100;
-        X =  - ( 9 * Y * var_U ) / ( ( var_U - 4 ) * var_V  - var_U * var_V );
-        Z = ( 9 * Y - ( 15 * var_V * Y ) - ( var_V * X ) ) / ( 3 * var_V );
+        Y = y * 100.0;
+        X =  - ( 9.0 * Y * var_U ) / ( ( var_U - 4.0 ) * var_V  - var_U * var_V );
+        Z = ( 9.0 * Y - ( 15.0 * var_V * Y ) - ( var_V * X ) ) / ( 3.0 * var_V );
     }
 
     public void setLUVColor(Color selectedColor){
@@ -222,6 +300,9 @@ public class LuvPanel extends AbstractColorChooserPanel {
         if(L < 0){
             lfield.setValue(0);
             lslider.setValue(0);
+        } else if (L>100){
+            lfield.setValue(100);
+            lslider.setValue(100);
         } else {
             lfield.setValue(L);
             lslider.setValue((int)L);
@@ -229,6 +310,12 @@ public class LuvPanel extends AbstractColorChooserPanel {
         if (Double.isNaN(U)){
             ufield.setValue(0);
             uslider.setValue(0);
+        } else if(U>100){
+            ufield.setValue(100);
+            uslider.setValue(100);
+        } else if(U<-100){
+            ufield.setValue(-100);
+            uslider.setValue(-100);
         } else {
             ufield.setValue(U);
             uslider.setValue((int)U);
@@ -236,13 +323,15 @@ public class LuvPanel extends AbstractColorChooserPanel {
         if(Double.isNaN(V)){
             vfield.setValue(0);
             vslider.setValue(0);
+        } else if(V>100){
+            vfield.setValue(100);
+            vslider.setValue(100);
+        } else if(V<-100){
+            vfield.setValue(-100);
+            vslider.setValue(-100);
         } else {
             vfield.setValue(V);
             vslider.setValue((int)V);
         }
-        /*lfield.setText(Double.toString(L));
-        ufield.setText(Double.toString(U));
-        vfield.setText(Double.toString(V));
-        */
     }
 }
